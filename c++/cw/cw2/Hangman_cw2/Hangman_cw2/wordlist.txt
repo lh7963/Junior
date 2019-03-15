@@ -1,0 +1,5 @@
+multiplie
+pluse
+minuse
+divide
+moduloe

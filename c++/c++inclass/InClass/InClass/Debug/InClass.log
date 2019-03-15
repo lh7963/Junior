@@ -1,0 +1,4 @@
+﻿  Lecture12.cpp
+s:\大三下\c++\c++inclass\inclass\inclass\lecture12.cpp(109): warning C4101: 'fptr': unreferenced local variable
+s:\大三下\c++\c++inclass\inclass\inclass\lecture12.cpp(110): warning C4101: 'fptrarrat': unreferenced local variable
+  InClass.vcxproj -> S:\大三下\c++\c++inclass\InClass\Debug\InClass.exe
