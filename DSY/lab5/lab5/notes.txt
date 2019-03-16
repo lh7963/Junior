@@ -1,0 +1,18 @@
+./redis-server
+./redis-cli
+
+javac -d bin -cp lib/commons-pool2-2.4.2.jar:lib/jedis-2.9.0.jar src/g52dsy/*.java
+
+java -cp lib/commons-pool2-2.4.2.jar:lib/jedis-2.9.0.jar:bin g52dsy.RedisTest1
+
+java -cp lib/commons-pool2-2.4.2.jar:lib/jedis-2.9.0.jar:bin g52dsy.RedisMailboxClient
+java -cp lib/commons-pool2-2.4.2.jar:lib/jedis-2.9.0.jar:bin g52dsy.RedisMailboxClient2
+
+
+KEYS message:*
+KEYS message:mb1:*
+HGETALL message:mb1:1
+get message_next_id
+subscribe message:mb1
+publish message:mb1 message:mb1:xxx
+
