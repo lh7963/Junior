@@ -1,9 +1,0 @@
-﻿  mainfunction.cpp
-  MyDemoA.cpp
-  Generating Code...
-  MazeDemoMain.cpp
-  MazeDemoObject.cpp
-  MazeDemoTileManager.cpp
-  Generating Code...
-DraggingDemo.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
-  CourseworkBase.vcxproj -> S:\大三下\c++\cw\cw3\CPPCoursework2019-v28\/Debug\CourseworkBase2018.exe
