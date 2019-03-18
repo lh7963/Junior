@@ -1,0 +1,50 @@
+Content
+• Names and name services
+	• URIs, URLs and URNs
+	• Java RMI registry
+• DNS
+	• Approach and applications
+	• Implementation
+• Directory services (just a bit)
+
+• Names and name services
+two big types of name:
+	1.*identifiers*
+	2.*descriptions*
+names in distributed sys:
+	1.pure name (just an array of bits)
+	2.address (used to specifically locate a resource;Good for accessing an object, but bad if the object can move;)
+	3.attributes(a name should be able to be resolved to them then the attributes can be used)
+*Uniform Resource Identifiers* (URIs) are a uniform(just a way of naming things)
+	• Defined for the World-Wide Web
+	• *Uniform Resource Names* (URNs) are pure names
+	• *Uniform Resource Locators* (URLs) specifically include information to locate and access a resource…
+	
+name service:
+	A name serves to uniquely distinguish one particular thing from other
+	name service maintains name-attribute bindings
+	A name service allows a (pure) name to be resolved to an address or other attributes bound to that name
+	A *name space* is the set of possible names in a name service
+	
+	
+Example: 
+JavaRMI registry(only for Java RMI) provides the name service
+	by default one instance runs on each node
+	runs ons a will known port 1099
+	Names are of the form “//HOST/OBJECT”(First level is host name, Second is object name on that host)
+	
+•DNS
+names in DNS are called *domain names*
+	Approach:
+		The name space is hierarchical, eg “www.cs.nott.ac.uk”
+		names are absolute,not relative(default domains are often configured to try the possible suffix)
+		Attributes are encoded as *Resource Records* of various types for various purposes
+	Applications:
+		Host name resolution (using A records) i.e. mapping a domain name to an IP address(maintain )
+		mail host location (using MX records) 
+		and various other applications on the Internet
+concepts:
+	name serves
+	identifiers(are names typically intended for machine use)
+	Descriptions(are statements about some aspect of a thing;used in directory services)
+	*URI* uniform resource identifiers
