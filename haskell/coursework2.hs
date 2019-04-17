@@ -16,7 +16,7 @@ data Expr = Val Int | Var Name | App Op Expr Expr
             deriving Show
 type Name = Char
 data Op   = Add | Sub | Mul | Div
-            deriving Show
+            deriving (Eq,Show)
 
 --Factorial example:
 
@@ -42,7 +42,7 @@ data Inst  = PUSH Int
            | JUMP Label
            | JUMPZ Label
            | LABEL Label
-             deriving Show
+             deriving (Eq,Show)
  
 type Label = Int
 
@@ -77,8 +77,8 @@ instance Monad ST where
 
 --------------------------------------------------------------------------------
 
-comp :: Prog -> Code
-comp p = fst( app ( mcompprog p ) 0 )
+mcomp :: Prog -> Code
+mcomp p = fst( app ( mmcompprog p ) 0 )
 compprog :: Prog -> Label -> (Code , Label)
 compprog (Seq []) l = ([],l)
 compprog (Seq (x:xs)) l = (  atfirst_cod_sequence ++ atother_cod_sequence, nl''  )
@@ -92,9 +92,9 @@ compprog (If e p1 p2) l = (  compExpr e ++ [JUMPZ l] ++ inside1 ++ [JUMP (l+1), 
                                                   (inside2, nl'') = compprog p1 (nl')
 
 mcompprog :: Prog -> ST Code
-mcompprog (Seq []) = do n <- ( S ( \x -> (x, x) ) ) -- = S(\x -> ([], x))
-                        return ([])
-mcompprog (Assign n e) = S (  \x -> ( compExpr e ++ [POP n]  ,  x )  )
+mcompprog (Seq []) = do n <- ( S ( \x -> (x, x) ) ) 
+                        return ([])  -- = S(\x -> ([], x))
+mcompprog (Assign n e) = S (  \s -> ( compExpr e ++ [POP n]  ,  s )  )
 {-
 mcompprog (While e p) =  mcompprog p >>= \code ->
                          (
@@ -111,8 +111,38 @@ mcompprog (Seq (p:ps)) = do code_ahead <- mcompprog p
                             S ( \s' -> (code_ahead ++ code_later, s') )
                             
                             
+-----------------------------------------------------------------------------------------------------------------------------------------
+getValue_and_changeState :: ST Label
+getValue_and_changeState = S(\s -> (s,s+1))               
+                             
+comp :: Prog -> Code
+comp p = fst( app ( mmcompprog p ) 0 )
+mmcompprog :: Prog -> ST Code
+mmcompprog (Seq []) = return []
+mmcompprog (Assign n e) = return (compExpr e ++ [POP n])
+mmcompprog (While e p) = do code <- mmcompprog p
+                            l <- getValue_and_changeState
+                            return ([LABEL l] ++ compExpr e ++ [JUMPZ (l+1)] ++ code ++ [JUMP l, LABEL (l+1)])
+mmcompprog (If e p1 p2) = do code1 <- mmcompprog p1
+                             code2 <- mmcompprog p2
+                             l1 <- getValue_and_changeState
+                             l2 <- getValue_and_changeState
+                             return (compExpr e ++ [JUMPZ l1] ++ code1 ++ [JUMP (l1 + 1), LABEL l1] ++ code2 ++ [LABEL (l1+1)])
+mmcompprog (Seq (p:ps)) = do code_ahead <- mmcompprog p
+                             code_later <- mmcompprog (Seq ps)
+                             return (code_ahead ++ code_later)
+                            
+                            
+                            
+                            
+                            
+                            
+-----------------------------------------------------------------------------------------------------------------------------------------                            
+                            
 --mcompprog (Seq (p:ps)) = do  <- mcompprog p
-                                                  
+
+getLabel :: ST Label
+getLabel = S(\n -> (n,n+1))
                                                   
 firsttest2 :: Prog
 firsttest2 = Seq [Assign 'A' (App Mul (Var 'A') (Var 'B')), Assign 'B' (App Sub (Var 'B') (Val (1)))]
@@ -154,4 +184,50 @@ mlabel (Node l r) = do l' <- mlabel l
 -}
 
 
+exec :: Code -> Mem
+exec is = exechelper is ([],[],[])
 
+
+
+type Label_code = [(Int,Code)]
+type Machinestate = (Label_code, Stack, Mem)
+
+exechelper :: Code -> Machinestate -> Mem
+-- exechelper [] (_,_,m) = m
+exechelper [] (_,_,m) = m
+exechelper (x:xs) (lc,s,m) = case x of
+                                            PUSH n -> exechelper xs ( lc, n:s, m)
+                                            PUSHV c -> exechelper xs ( lc, (getfromname m c) : s ,m)
+                                            POP c -> exechelper xs ( lc, drop 1 s, assignwithvalue (c,s!!0) m )
+                                            DO op ->  case op of
+                                                        Add -> exechelper xs (lc, ((s!!1) + (s!!0)):(drop 2 s), m )
+                                                        Sub -> exechelper xs (lc, ((s!!1) - (s!!0)) : (drop 2 s), m )
+                                                        Mul -> exechelper xs (lc, ((s!!1) * (s!!0)) : (drop 2 s), m )
+                                                        Div -> exechelper xs (lc, ((div (s!!1) (s!!0))) : (drop 2 s), m )
+                                            LABEL l -> exechelper xs ((l,xs):lc, s , m) --xs is the remain code after the Label l
+                                            JUMP l -> exechelper (get_remain_code lc l (x:xs)) (lc, s, m)
+                                            JUMPZ l -> case s!!0 of
+                                                            0 -> exechelper (get_remain_code lc l (x:xs)) (lc, drop 1 s, m)  -- jump
+                                                            _ -> exechelper xs (lc,drop 1 s,m) -- just continue
+                                                            
+                                                        
+-- 
+getfromname:: Mem-> Name -> Int
+getfromname ((c_inMem,v):xs) c  | c_inMem == c = v
+                                | otherwise = getfromname xs c
+
+assignwithvalue:: (Name, Int) -> Mem -> Mem
+assignwithvalue (c,v) [] = [(c,v)]
+assignwithvalue (c,v)((c',v'):ms) | c == c' = (c',v): ms
+                                  | otherwise = (c',v'): (assignwithvalue (c,v) ms)
+-- go throught the [(label , code0], if not found, go through the remain code                    
+get_remain_code :: [(Int,Code)] -> Label -> Code -> Code
+get_remain_code [] l [] = []
+get_remain_code [] l ( i : is ) | (LABEL l) == i = is
+                                | otherwise = get_remain_code [] l is
+get_remain_code ((l',afterl'):lc) l is | l' == l = afterl'
+                                       | otherwise = get_remain_code lc l is
+
+                                       
+                                       
+tett = [PUSH 1, POP 'A', PUSH 10, POP 'B']

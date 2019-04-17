@@ -333,8 +333,7 @@ instance MyFunctor MyMaybe where
     myfmap _ MyNothing  = MyNothing
     myfmap g (MyJust m) = MyJust (g m)
 
-a::Int
-a=3
+
 
 safediv :: Int -> Int -> Maybe Int
 safediv _ 0 = Nothing
@@ -346,3 +345,39 @@ eval (Val n) = Just n
 eval (Div x y) = do  m <- eval x
                      n <- eval y
                      safediv m n
+                     
+cc :: Integral a => a -> a -> a
+cc x y = div x y
+
+data Mytype a = Ka a
+
+data Haha = Kaka Int
+                    
+newtype Lu a = Mimi a
+
+instance Show (Lu a) where 
+    show (Mimi x) = "Mimi "
+  
+  
+class Myshow m where 
+    myshow :: m a -> String
+    myanoshow :: m a -> Int
+    
+instance Myshow (Lu) where
+    myshow (Mimi a) = "adf"
+    myanoshow (Mimi a) = 3
+    
+mylist = [1,2,3,4]
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
